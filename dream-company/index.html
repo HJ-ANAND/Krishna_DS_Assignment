@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CODING MANIAC // Elite Full-Stack Systems</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #020202;
+            --accent: #2563eb;
+            --border: rgba(255, 255, 255, 0.07);
+        }
+
+        body {
+            background-color: var(--bg);
+            color: #94a3b8;
+            font-family: 'Space Grotesk', sans-serif;
+            scroll-behavior: smooth;
+        }
+
+        .mono { font-family: 'JetBrains Mono', monospace; }
+
+        /* Advanced UI Effects */
+        .glass {
+            background: rgba(10, 10, 10, 0.7);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+        }
+
+        .glow-blue { box-shadow: 0 0 40px -10px rgba(37, 99, 235, 0.3); }
+
+        .scanline {
+            width: 100%; height: 100px; z-index: 50; pointer-events: none;
+            position: fixed; top: -100px; left: 0; opacity: 0.02;
+            background: linear-gradient(to bottom, transparent, #3b82f6, transparent);
+            animation: scan 8s linear infinite;
+        }
+
+        @keyframes scan { 0% { top: -100px; } 100% { top: 100%; } }
+
+        .nav-link { position: relative; transition: color 0.3s; }
+        .nav-link::after {
+            content: ''; position: absolute; bottom: -4px; left: 0;
+            width: 0; height: 1px; background: var(--accent); transition: width 0.3s;
+        }
+        .nav-link:hover::after { width: 100%; }
+        .nav-link:hover { color: white; }
+
+        #view { animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="selection:bg-blue-500/30 selection:text-white">
+    <div class="scanline"></div>
+
+    <nav class="fixed top-0 w-full z-[100] p-6">
+        <div class="max-w-7xl mx-auto glass rounded-2xl px-8 py-4 flex items-center justify-between shadow-2xl">
+            <div class="flex items-center gap-3 cursor-pointer group" onclick="router.nav('home')">
+                <div class="w-10 h-10 bg-blue-600 rounded flex items-center justify-center group-hover:bg-white transition-colors">
+                    <i data-lucide="terminal" class="text-white group-hover:text-black w-6 h-6"></i>
+                </div>
+                <span class="text-xl font-bold tracking-tighter text-white uppercase">Coding <span class="text-blue-600">Maniac</span></span>
+            </div>
+            
+            <div class="hidden md:flex gap-10 text-[11px] font-bold uppercase tracking-[0.3em]">
+                <button onclick="router.nav('home')" class="nav-link">Genesis</button>
+                <button onclick="router.nav('about')" class="nav-link">The Crew</button>
+                <button onclick="router.nav('products')" class="nav-link">The Lab</button>
+                <button onclick="router.nav('blog')" class="nav-link">Codex</button>
+                <button onclick="router.nav('contact')" class="nav-link">Secure</button>
+            </div>
+
+            <button onclick="router.nav('contact')" class="hidden sm:block border border-white/10 hover:border-blue-500 px-6 py-2 rounded-lg text-[10px] font-black tracking-widest transition-all">
+                INITIATE PROJECT
+            </button>
+        </div>
+    </nav>
+
+    <main id="view"></main>
+
+    <div class="fixed bottom-8 right-8 z-[200]">
+        <div id="ai-chat" class="hidden glass w-80 sm:w-96 h-[500px] rounded-3xl mb-4 overflow-hidden flex flex-col shadow-2xl">
+            <div class="p-5 border-b border-white/5 bg-white/[0.02] flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                    <span class="text-xs font-bold text-white uppercase tracking-widest">Maniac AI Interface</span>
+                </div>
+                <button onclick="AI.toggle()"><i data-lucide="x" class="w-4 h-4 hover:text-white"></i></button>
+            </div>
+            <div id="ai-messages" class="flex-1 p-5 overflow-y-auto space-y-4 text-xs font-medium leading-relaxed">
+                <div class="bg-white/5 p-4 rounded-2xl rounded-bl-none text-gray-300">
+                    System online. I am the Maniac Proxy. I can navigate this site, explain our tech stack, or calculate project ROI. What's the query?
+                </div>
+            </div>
+            <div class="p-4 bg-black flex gap-2">
+                <input id="ai-input" type="text" placeholder="Speak to the proxy..." class="bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-xs w-full focus:outline-none focus:border-blue-600 text-white mono">
+                <button onclick="AI.process()" class="bg-blue-600 px-4 rounded-xl text-white"><i data-lucide="zap" class="w-4 h-4"></i></button>
+            </div>
+        </div>
+        <button onclick="AI.toggle()" class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center glow-blue hover:scale-105 active:scale-90 transition-all">
+            <i data-lucide="bot" class="text-white w-8 h-8"></i>
+        </button>
+    </div>
+
+    <script>
+        const router = {
+            nav: (page) => {
+                const view = document.getElementById('view');
+                view.innerHTML = router.pages[page]();
+                lucide.createIcons();
+                window.scrollTo(0,0);
+            },
+            pages: {
+                home: () => `
+                    <section class="pt-40 pb-20 px-6 max-w-7xl mx-auto flex flex-col items-center">
+                        <div class="mono text-blue-600 text-xs font-bold mb-6 tracking-[0.4em] uppercase">// High Performance Dev Studio</div>
+                        <h1 class="text-7xl md:text-9xl font-bold text-white text-center tracking-tighter leading-none mb-10">
+                            PURE <br> <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-400">EFFICIENCY.</span>
+                        </h1>
+                        <p class="text-gray-500 text-lg md:text-xl text-center max-w-2xl mb-12">
+                            Obsessive engineering for the world's most demanding developers. We don't just build, we optimize every bit.
+                        </p>
+                        <div class="flex gap-4">
+                            <button onclick="router.nav('products')" class="bg-blue-600 text-white px-10 py-4 rounded-xl font-bold text-sm shadow-2xl hover:bg-blue-500 transition">VIEW THE LAB</button>
+                            <button onclick="router.nav('contact')" class="glass px-10 py-4 rounded-xl font-bold text-sm hover:bg-white/5 transition">CONNECT</button>
+                        </div>
+                    </section>
+
+                    <section class="max-w-7xl mx-auto px-6 py-20 grid md:grid-cols-4 gap-6">
+                        <div class="glass p-8 rounded-[32px] md:col-span-2">
+                            <h3 class="text-white text-3xl font-bold mb-4 italic">99.9% Core Uptime</h3>
+                            <p class="text-sm">Our assets are tested against extreme load to ensure your launch never falters.</p>
+                            <div class="mt-10 flex gap-2">
+                                <div class="h-1 flex-1 bg-blue-600 rounded-full"></div>
+                                <div class="h-1 flex-1 bg-blue-600/30 rounded-full"></div>
+                                <div class="h-1 flex-1 bg-blue-600/30 rounded-full"></div>
+                            </div>
+                        </div>
+                        <div class="glass p-8 rounded-[32px] flex flex-col justify-center items-center text-center">
+                            <span class="text-5xl font-bold text-white">400k+</span>
+                            <span class="text-[10px] text-blue-600 uppercase tracking-widest mt-2 font-black">Downloads</span>
+                        </div>
+                        <div class="glass p-8 rounded-[32px] flex flex-col justify-center items-center text-center">
+                            <span class="text-5xl font-bold text-white">12</span>
+                            <span class="text-[10px] text-blue-600 uppercase tracking-widest mt-2 font-black">Active Maniacs</span>
+                        </div>
+                    </section>
+
+                    <section class="max-w-7xl mx-auto px-6 py-20">
+                        <div class="grid lg:grid-cols-2 gap-20 items-center">
+                            <div>
+                                <h2 class="text-5xl font-bold text-white tracking-tighter mb-8 italic">Engineering the <br> Extreme.</h2>
+                                <p class="mb-6 leading-relaxed">Most developers settle for "good enough." We spend weeks shaving milliseconds off initial load times. We use a proprietary tech stack that leverages the latest in Edge computing and Rust-based toolchains.</p>
+                                <ul class="space-y-4 text-sm font-bold text-gray-300">
+                                    <li class="flex items-center gap-3"><i data-lucide="check-circle" class="text-blue-500 w-4 h-4"></i> Optimized for Core Web Vitals</li>
+                                    <li class="flex items-center gap-3"><i data-lucide="check-circle" class="text-blue-500 w-4 h-4"></i> Type-Safe Architecture</li>
+                                    <li class="flex items-center gap-3"><i data-lucide="check-circle" class="text-blue-500 w-4 h-4"></i> Dark-Mode First Philosophy</li>
+                                </ul>
+                            </div>
+                            <div class="relative">
+                                <div class="absolute -inset-4 bg-blue-600/20 blur-[100px] rounded-full"></div>
+                                <img src="https://images.unsplash.com/photo-1607799279861-4dd421887fb3?q=80&w=1000" class="relative z-10 rounded-[40px] border border-white/10 grayscale hover:grayscale-0 transition-all duration-700">
+                            </div>
+                        </div>
+                    </section>
+                `,
+                about: () => `
+                    <section class="pt-40 pb-20 px-6 max-w-7xl mx-auto">
+                        <div class="mb-20 text-center">
+                            <h2 class="text-6xl font-black text-white tracking-tighter">THE MANIAC CREW</h2>
+                            <p class="text-blue-600 mono mt-4 font-bold tracking-widest uppercase">// A decentralized collective of elite engineers</p>
+                        </div>
+                        
+                        <div class="grid md:grid-cols-4 gap-8 mb-32">
+                            ${[
+                                { name: 'X-Ray', role: 'Arch Lead', bio: 'Former Silicon Valley outlier. Optimized DBs for millions.' },
+                                { name: 'Zero', role: 'UI Architect', bio: 'Obsessed with the golden ratio and 60fps animations.' },
+                                { name: 'Vector', role: 'Security', bio: 'Ensuring your digital vault remains impenetrable.' },
+                                { name: 'Shift', role: 'Growth', bio: 'Scalability expert for rapid-market deployments.' }
+                            ].map(m => `
+                                <div class="glass p-8 rounded-3xl hover:border-blue-600 transition-colors">
+                                    <div class="w-16 h-16 bg-white/5 rounded-full mb-6 flex items-center justify-center">
+                                        <i data-lucide="user" class="text-blue-600"></i>
+                                    </div>
+                                    <h3 class="text-xl font-bold text-white mb-1 uppercase tracking-tighter">${m.name}</h3>
+                                    <p class="text-[10px] text-blue-500 font-black mb-4 tracking-widest">${m.role}</p>
+                                    <p class="text-xs leading-relaxed text-gray-500">${m.bio}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+
+                        <div class="glass rounded-[60px] p-20 flex flex-col items-center text-center">
+                            <h3 class="text-4xl font-bold text-white mb-6">Our 2026 Roadmap</h3>
+                            <div class="max-w-2xl space-y-8 mt-10">
+                                <div class="flex gap-6 text-left">
+                                    <span class="text-blue-600 mono font-bold italic">Q1</span>
+                                    <p class="text-sm">Release of the Maniac OS—a full browser-based operating system for developers.</p>
+                                </div>
+                                <div class="flex gap-6 text-left">
+                                    <span class="text-blue-600 mono font-bold italic">Q3</span>
+                                    <p class="text-sm">AI-Driven UI generation integrated directly into our component kits.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                `,
+                products: () => `
+                    <section class="pt-40 pb-20 px-6 max-w-7xl mx-auto">
+                        <div class="flex flex-col md:flex-row justify-between items-end mb-20 gap-8">
+                            <div>
+                                <h2 class="text-6xl font-black text-white tracking-tighter">THE LAB</h2>
+                                <p class="text-gray-500 mt-2">Production-ready assets for extreme builders.</p>
+                            </div>
+                            <div class="flex gap-4 mono text-[10px] font-bold">
+                                <span class="bg-blue-600 text-white px-4 py-2 rounded">ALL</span>
+                                <span class="glass px-4 py-2 rounded hover:text-white transition cursor-pointer">BOILERPLATES</span>
+                                <span class="glass px-4 py-2 rounded hover:text-white transition cursor-pointer">UI KITS</span>
+                            </div>
+                        </div>
+                        
+                        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            ${[
+                                { title: 'OBSIDIAN KIT', price: '99', cat: 'UI DESIGN', img: 'https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=500' },
+                                { title: 'NODE-X ENGINE', price: '249', cat: 'BACKEND', img: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc51?q=80&w=500' },
+                                { title: 'CYBER SAAS', price: '199', cat: 'FULL STACK', img: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?q=80&w=500' },
+                                { title: 'MANIAC FONTS', price: '39', cat: 'ASSET', img: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=500' },
+                                { title: 'API DROID', price: '79', cat: 'TOOL', img: 'https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=500' },
+                                { title: 'ETHER DESIGN', price: '129', cat: 'FIGMA', img: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=500' }
+                            ].map(p => `
+                                <div class="glass rounded-[40px] overflow-hidden hover:border-blue-600 transition-all group">
+                                    <div class="h-60 overflow-hidden relative">
+                                        <img src="${p.img}" class="w-full h-full object-cover opacity-50 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700">
+                                        <div class="absolute bottom-4 left-4 bg-blue-600 text-[9px] font-black px-3 py-1 rounded text-white tracking-widest">${p.cat}</div>
+                                    </div>
+                                    <div class="p-8">
+                                        <h3 class="text-xl font-bold text-white mb-1 uppercase tracking-tighter">${p.title}</h3>
+                                        <p class="text-xs text-gray-500 mb-6 font-mono font-bold tracking-tighter">$${p.price}.00 USD</p>
+                                        <button class="w-full py-4 bg-white text-black font-black rounded-2xl text-[10px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition">Acquire Asset</button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </section>
+                `,
+                blog: () => `
+                    <section class="pt-40 pb-20 px-6 max-w-5xl mx-auto">
+                        <h2 class="text-7xl font-black text-white mb-20 tracking-tighter">CODEX</h2>
+                        <div class="space-y-4">
+                            ${[
+                                { title: 'The Rust-ification of the Web', date: 'FEB 25 2026', read: '12 MIN' },
+                                { title: 'Why white-space is the ultimate UI feature', date: 'FEB 18 2026', read: '5 MIN' },
+                                { title: 'Deploying to Mars: A Latency Tale', date: 'FEB 04 2026', read: '20 MIN' },
+                                { title: 'The end of traditional SEO', date: 'JAN 28 2026', read: '7 MIN' },
+                                { title: 'Building for the 100Gbps generation', date: 'JAN 12 2026', read: '15 MIN' }
+                            ].map(b => `
+                                <div class="glass p-8 rounded-2xl flex items-center justify-between group cursor-pointer hover:bg-white/[0.03] transition">
+                                    <div>
+                                        <span class="mono text-blue-600 text-[10px] font-bold tracking-widest uppercase">${b.date} // ${b.read} READ</span>
+                                        <h3 class="text-2xl font-bold text-white mt-1 group-hover:translate-x-3 transition-transform uppercase italic tracking-tighter">${b.title}</h3>
+                                    </div>
+                                    <i data-lucide="arrow-right" class="text-gray-700 group-hover:text-blue-500 group-hover:translate-x-2 transition-all"></i>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </section>
+                `,
+                contact: () => `
+                    <section class="pt-40 pb-20 px-6 max-w-7xl mx-auto grid lg:grid-cols-2 gap-20">
+                        <div>
+                            <h2 class="text-7xl font-black text-white tracking-tighter mb-8 italic uppercase">The Terminal.</h2>
+                            <p class="text-gray-400 text-lg mb-10">We are highly selective with our partnerships. If you have a project that pushes boundaries, transmit the details below.</p>
+                            <div class="space-y-4 mono text-xs font-bold text-gray-500 uppercase tracking-widest">
+                                <p class="flex gap-4"><i data-lucide="globe" class="text-blue-600"></i> global_operations</p>
+                                <p class="flex gap-4"><i data-lucide="mail" class="text-blue-600"></i> maniac@codingmaniac.dev</p>
+                                <p class="flex gap-4"><i data-lucide="shield" class="text-blue-600"></i> end_to_end_encrypted</p>
+                            </div>
+                        </div>
+                        <div class="glass p-10 rounded-[40px]">
+                            <form class="space-y-6" onsubmit="event.preventDefault(); alert('Transmission Received.');">
+                                <div class="grid md:grid-cols-2 gap-6">
+                                    <input type="text" placeholder="IDENTITY" class="bg-white/5 border border-white/5 p-4 rounded-xl outline-none focus:border-blue-600 transition text-white mono text-xs uppercase font-bold tracking-widest">
+                                    <input type="email" placeholder="SECURE EMAIL" class="bg-white/5 border border-white/5 p-4 rounded-xl outline-none focus:border-blue-600 transition text-white mono text-xs uppercase font-bold tracking-widest">
+                                </div>
+                                <textarea rows="6" placeholder="TRANSMISSION DATA" class="w-full bg-white/5 border border-white/5 p-4 rounded-xl outline-none focus:border-blue-600 transition text-white mono text-xs uppercase font-bold tracking-widest"></textarea>
+                                <button class="w-full bg-blue-600 py-6 rounded-xl font-black text-[10px] uppercase tracking-[0.4em] text-white hover:bg-blue-500 transition shadow-2xl">INITIATE HANDSHAKE</button>
+                            </form>
+                        </div>
+                    </section>
+                `
+            }
+        };
+
+        // 🧠 MANIAC PROXY AI BRAIN
+        const AI = {
+            toggle: () => {
+                const chat = document.getElementById('ai-chat');
+                chat.classList.toggle('hidden');
+                lucide.createIcons();
+            },
+            reply: (text) => {
+                const box = document.getElementById('ai-messages');
+                box.innerHTML += `<div class="bg-white/5 p-4 rounded-2xl rounded-bl-none text-gray-300"><b>Maniac:</b> ${text}</div>`;
+                box.scrollTop = box.scrollHeight;
+            },
+            process: () => {
+                const input = document.getElementById('ai-input');
+                const box = document.getElementById('ai-messages');
+                const val = input.value.trim().toLowerCase();
+                if(!val) return;
+
+                // User chat bubble
+                box.innerHTML += `<div class="bg-blue-600 p-4 rounded-2xl rounded-br-none text-white ml-8 text-right">${input.value}</div>`;
+                
+                // Logic Processing (Keyword-Weighted Response System)
+                let response = "Oracle Proxy does not understand this syntax. Try commands like 'go to products', 'who is the team?', or 'contact'.";
+                
+                if(val.includes('hello') || val.includes('hi')) response = "Handshake acknowledged. What is your objective?";
+                else if(val.includes('shop') || val.includes('product') || val.includes('buy')) {
+                    response = "Navigating to THE LAB. I suggest checking out the Node-X Engine for massive scalability.";
+                    setTimeout(() => router.nav('products'), 1000);
+                }
+                else if(val.includes('team') || val.includes('crew') || val.includes('employees')) {
+                    response = "Accessing personnel files. Taking you to 'The Crew'.";
+                    setTimeout(() => router.nav('about'), 1000);
+                }
+                else if(val.includes('blog') || val.includes('codex') || val.includes('read')) {
+                    response = "Opening the CODEX. Decrypting the latest industry journals.";
+                    setTimeout(() => router.nav('blog'), 1000);
+                }
+                else if(val.includes('contact') || val.includes('hire') || val.includes('email')) {
+                    response = "Opening secure line to the terminal. Please provide your identity.";
+                    setTimeout(() => router.nav('contact'), 1000);
+                }
+                else if(val.includes('home') || val.includes('genesis')) {
+                    response = "Returning to Genesis. Re-optimizing systems.";
+                    setTimeout(() => router.nav('home'), 1000);
+                }
+                else if(val.includes('price') || val.includes('cost')) response = "Our assets range from $39 to $249. Head to the 'Lab' for full details.";
+                else if(val.includes('stat') || val.includes('data')) response = "We have 400k+ downloads and a 99.9% uptime record. Check Genesis for the dashboard.";
+
+                setTimeout(() => { AI.reply(response); }, 600);
+                input.value = "";
+            }
+        };
+
+        // RUN
+        router.nav('home');
+        document.getElementById('ai-input').addEventListener('keypress', (e) => { if(e.key === 'Enter') AI.process(); });
+    </script>
+</body>
+</html>
